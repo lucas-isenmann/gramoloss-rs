@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use adj_matrices::print_adj;
+use bin_adj_matrices::{search3, BitwiseAdjacencyMatrix};
 use degrees::{in_degree, in_degrees_sequence};
 use dichromatic_number::{compute_dichromatric_number, to_dot};
 use lightness::{is_light, is_light_critic};
@@ -143,6 +144,13 @@ fn search(n: usize){
 
 
 fn main() {
+
+    search3(13);
+
+    // search2(9);
+
+    return ;
+
     // search(11);
 
     search2(11);
