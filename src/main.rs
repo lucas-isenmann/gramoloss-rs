@@ -6,7 +6,7 @@ use degrees::{in_degree, in_degrees_sequence};
 use dichromatic_number::{compute_dichromatric_number, to_dot};
 use lightness::{is_light, is_light_critic};
 use search::search2;
-use tournaments_generators::{circulant_tournament, ug_tournament};
+use tournaments_generators::{circulant_tournament, group_tournament, ug_tournament};
 
 mod dichromatic_number;
 mod adj_matrices;
@@ -141,6 +141,70 @@ fn search(n: usize){
     
 
 }
+
+
+fn group_tournament_test() {
+    let n = 9;
+    let m = 5;
+
+    let mut l = vec![];
+
+    for i in 0..n {
+        for j in 0..m {
+            if i == 0 && j == 0{
+                continue;
+            }
+            if !l.contains(&((n-i)%n,(m-j)%m)) {
+                l.push((i,j))
+            }
+        }
+    }
+    println!("{l:?}");
+    let k = l.len();
+    for a in 0..(1 << k) {
+        let mut positives = vec![];
+        for b in 0..k{
+            if a & (1 << b) == 0 {
+                positives.push(l[b])
+            } else {
+                let (x,y) = l[b];
+                positives.push(((n-x)%n, (m-y)%m));
+            }
+        }
+        let g = group_tournament(n, m, positives.clone());
+        if is_light(&g){
+            
+            let chi = dichromatic_number::compute_dichromatric_number(&g);
+            
+            if chi >= 3{
+                println!("{positives:?}");
+                println!("chi: {chi}");
+            }
+        }
+        
+    }
+
+    
+
+    // let g = group_tournament(5, 3, vec![(1,0), (2,0), (0,1),(4,2), (3,2),(4,1),(2,2)]);
+    // print_adj(&g);
+    // println!("---");
+    // println!("{}", is_light(&g));
+    // let chi = dichromatic_number::compute_dichromatric_number(&g);
+    // println!("chi: {chi}");
+
+    if (false) {
+        let g = group_tournament(3, 3, vec![(0,2), (2,0), (1,1), (1,2)]);
+        print_adj(&g);
+        println!("---");
+        println!("{}", is_light(&g));
+        let chi = dichromatic_number::compute_dichromatric_number(&g);
+        println!("chi: {chi}");
+    }
+    
+
+}
+
 
 
 fn main() {

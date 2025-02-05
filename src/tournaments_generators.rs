@@ -1,5 +1,35 @@
 use std::collections::HashSet;
 
+
+pub fn group_tournament(n: usize, m: usize, l: Vec<(usize, usize)>) -> Vec<Vec<bool>> {
+    let size = n*m;
+    let mut adj = vec![vec![false; size]; size];
+
+    for i in 0..n{
+        for j in 0..m {
+            let x = i + j*n;
+            for (a,b) in l.iter() {
+                let y = ((i+n+a)%n) + ((j+m+b)%m)*n;
+                adj[x][y] = true;
+            }
+
+            // for a in 0..n {
+            //     for b in 0..m {
+            //         let y = ((i+a)%n) + ((j+b)%m)*n;
+            //         let w = ((i+n-a)%n) + ((j+m-b)%m)*n;
+            //         if l[a][b] {
+            //             adj[x][y] = true;
+            //         } else {
+            //             adj[x][w] = true;
+            //         }
+            //     }
+            // }
+        }
+    }
+
+    adj
+}
+
 pub fn circulant_tournament(l: Vec<bool>) -> Vec<Vec<bool>> {
     let n = l.len()*2 +1;
     let mut adj = vec![vec![false; n];n];
