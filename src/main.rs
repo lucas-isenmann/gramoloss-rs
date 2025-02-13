@@ -1,13 +1,15 @@
 use std::collections::HashSet;
 
 use adj_matrices::print_adj;
-use bin_adj_matrices::{search3, BitwiseAdjacencyMatrix};
+use bin_adj_matrices::{ search3, BitwiseAdjacencyMatrix};
 use degrees::{in_degree, in_degrees_sequence};
 use dichromatic_number::{compute_dichromatric_number, to_dot};
 use lightness::{is_light, is_light_critic};
 use search::search2;
 use tournaments_generators::{circulant_tournament, group_tournament, ug_tournament};
+use triangles_poset::compute_triangles_poset;
 
+mod triangles_poset;
 mod dichromatic_number;
 mod adj_matrices;
 mod lightness;
@@ -206,10 +208,74 @@ fn group_tournament_test() {
 }
 
 
+fn search_ug_tournament(n: usize){
+    let k = n-1;
+    println!("{n} {k}");
+
+    for a in 0..(1 << k){
+        let mut gaps = HashSet::new();
+        for i in 0..k {
+            if a & (1 << i) != 0{
+                gaps.insert(i+1);
+            }
+        }
+
+        let g = ug_tournament(n, &gaps);
+        let mut g2 = BitwiseAdjacencyMatrix::new(n);
+        for i in 0..n{
+            for j in 0..n {
+                if g[i][j] {
+                    g2.add_arc(i, j);
+                }
+            }
+        }
+        if bin_adj_matrices::is_light(&g2) {
+            let chi = bin_adj_matrices::compute_dichromatric_number(&g2);
+            if chi >= 4 {
+                println!("\t{gaps:?}");
+                g2.to_dot();
+                println!("\tchi={chi}");
+            }
+        }
+        // if is_light(&g){
+            
+        //     let chi = dichromatic_number::compute_dichromatric_number(&g);
+            
+        //     if chi >= 3 {
+        //         println!("\t{gaps:?}");
+        //         println!("\tchi={chi}");
+        //     }
+            
+        // }
+        
+    }
+    
+    
+}
+
+
+fn print_triangles_poset(){
+    let g = BitwiseAdjacencyMatrix::from_adj_matrix(&circulant_tournament(vec![true, true, true, true]));
+    let g = BitwiseAdjacencyMatrix::from_dot_file("t13.dot").unwrap();
+    println!("is_light={}", bin_adj_matrices::is_light(&g));
+    let chi = bin_adj_matrices::compute_dichromatric_number(&g);
+    println!("chi={chi}");
+
+    g.to_dot();
+    compute_triangles_poset(&g);
+}
+
 
 fn main() {
 
-    search3(13);
+    print_triangles_poset();
+    
+
+    // for n in 15..20{
+    //     search_ug_tournament(1+2*n);
+    // }
+    
+    // search3(13);
 
     // search2(9);
 
@@ -248,7 +314,7 @@ fn main() {
     }
 
     if false {
-        let g = ug_tournament(11, HashSet::from([3,6]));
+        let g = ug_tournament(11, &HashSet::from([3,6]));
         println!("{}", is_light(&g));
         print_adj(&g);
         let chi = dichromatic_number::compute_dichromatric_number(&g);

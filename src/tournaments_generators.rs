@@ -66,7 +66,7 @@ pub fn u_tournament(n: usize, k: usize) -> Vec<Vec<bool>> {
 
 
 
-pub fn ug_tournament(n: usize, gaps: HashSet<usize>) -> Vec<Vec<bool>> {
+pub fn ug_tournament(n: usize, gaps: &HashSet<usize>) -> Vec<Vec<bool>> {
     let mut adj = vec![vec![false; n];n];
 
     for i in 0..n{

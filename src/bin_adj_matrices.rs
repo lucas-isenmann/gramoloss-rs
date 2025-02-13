@@ -1,3 +1,5 @@
+use std::{collections::HashMap, fs, path::Path};
+
 
 
 pub struct BitwiseAdjacencyMatrix {
@@ -21,6 +23,23 @@ impl BitwiseAdjacencyMatrix {
             out_degree: vec![0; n], 
             un_degree: vec![n-1; n], 
             powers_of_2 }
+    }
+
+    pub fn from_adj_matrix(adj: &Vec<Vec<bool>>) -> Self {
+        let n = adj.len();
+        let mut g = BitwiseAdjacencyMatrix::new(n);
+        for i in 0..n{
+            for j in 0..n {
+                if adj[i][j] {
+                    g.add_arc(i, j);
+                }
+            }
+        }
+        g
+    }
+
+    pub fn size(&self) -> usize {
+        self.n
     }
 
     pub fn add_arc(&mut self, i: usize, j: usize) {
@@ -48,7 +67,11 @@ impl BitwiseAdjacencyMatrix {
     }
 
     pub fn print_in_degrees(&self) {
-        println!("{:?}",  (0..self.n).map( | i| self.in_degree(i)).collect::<Vec<usize>>() );
+        let mut list = (0..self.n).map( | i| self.in_degree(i)).collect::<Vec<usize>>();
+        println!("{:?}", list  );
+        list.sort();
+        println!("{:?}", list)
+    
     }
 
     pub fn are_twin(&self, i: usize, j: usize) -> bool {
@@ -80,6 +103,81 @@ impl BitwiseAdjacencyMatrix {
             }
             println!();
         }
+    }
+
+    pub fn to_dot(&self){
+        let n = self.n;
+        println!("digraph G {{");
+        for i in 0..n {
+            for j in 0..n {
+                if self.has_arc(i, j) {
+                    println!("{i} -> {j};")
+                }
+            }
+        }
+        println!("}}");
+    
+    }
+
+    pub fn from_dot_file<P: AsRef<Path>>(path: P) -> Result<Self, std::io::Error> {
+        let contents = fs::read_to_string(path)?;
+
+        let mut arcs = vec![];
+        let mut n = 0;
+        let mut indices = HashMap::new();
+
+        
+        // Split into lines and process each edge
+        for line in contents.lines() {
+            let line = line.trim();
+            
+            // Skip empty lines and comments
+            if line.is_empty() || line.starts_with("//") {
+                continue;
+            }
+            
+            // Remove trailing semicolon
+            let line = line.trim_end_matches(';');
+            
+            // Split on arrow operator
+            if let Some(pos) = line.find(" -> ") {
+                let source = line[..pos].to_string();
+                let target = line[pos + 4..].to_string();
+
+                if indices.contains_key(&source) == false {
+                    indices.insert(source.clone(), n);
+                    n += 1;
+                }
+                if indices.contains_key(&target) == false {
+                    indices.insert(target.clone(), n);
+                    n += 1;
+                }
+                
+                // Add nodes and edge
+                arcs.push((source, target));
+            }
+        }
+
+
+        let mut g = BitwiseAdjacencyMatrix::new(n);
+
+        for (s,t) in arcs {
+            let u: usize = s.parse().unwrap();
+            let v: usize = t.parse().unwrap();
+            g.add_arc(u, v);
+        }
+
+
+        // for (s, t) in arcs {
+        //     if let Some(&u)  = indices.get(&s) {
+        //         if let Some(&v) = indices.get(&t){
+        //             g.add_arc(u, v);
+        //         }
+        //     }
+
+        // }
+        
+        Ok(g)
     }
 
 }
@@ -199,8 +297,8 @@ pub fn is_local_light(g: &BitwiseAdjacencyMatrix, u: usize, v: usize) -> bool {
 
 
 fn check_0_is_min(g: &BitwiseAdjacencyMatrix) -> bool {
-    for k in 1..g.n {
-        if g.in_degree[0] > g.in_degree[k] + g.un_degree[k]{
+    for k in 0..g.n-1 {
+        if g.in_degree[g.n-1] > g.in_degree[k] + g.un_degree[k]{
             return false
         }
     }
@@ -241,7 +339,6 @@ pub fn search3(n: usize){
 
             if  check_0_is_min(&g) && g.has_twin() == false && is_local_light(&g, i, j) {
                 done.push((i,j));
-                continue;
             } else {
                 g.delete_arc(i, j);
 
@@ -253,14 +350,11 @@ pub fn search3(n: usize){
                     todo.push((j,i));
                     while let Some((x,y)) = done.pop(){
                         g.delete_arc(x, y);
+                        todo.push((y,x));
 
                         if x < y {
                             finito = false;
-                            todo.push((y,x));
                             break;
-                        }
-                        else {
-                            todo.push((y,x))
                         }
                     }
                     if finito {
@@ -272,7 +366,7 @@ pub fn search3(n: usize){
         }
 
         // Light tournament found
-        let mut is_twin = false;
+        // let mut is_twin = false;
         // for i in 0..n {
         //     for j in 0..i{
         //         if g.are_twin(i, j) {
@@ -285,19 +379,21 @@ pub fn search3(n: usize){
         //     }
         // }
 
-        if is_twin == false {
+        // if is_twin == false {
             let chi = compute_dichromatric_number(&g);
 
             if chi >= 3 {
+                println!("---");
                 println!("chi={chi} {done:?}");
                 g.print_in_degrees();
                 //to_dot(&adj);
+                g.to_dot();
                 c += 1;
             }
             
 
 
-        }
+        // }
 
             
         
@@ -310,16 +406,14 @@ pub fn search3(n: usize){
         let mut finito = true;
         while let Some((x,y)) = done.pop(){
             g.delete_arc(x, y);
+            todo.push((y,x));
+
             if x < y {
                 finito = false;
-                todo.push((y,x));
                 break;
             }
-            else {
-                todo.push((y,x))
-            }
         }
-        if   finito{
+        if finito{
             println!("Number of light tournaments with Chi >= 3 and without twins: {c}");
             return;
         }
