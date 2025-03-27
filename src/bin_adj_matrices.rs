@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs, path::Path};
+use std::{collections::HashMap, fs::{self, File}, io::{BufRead, BufReader}, ops::Index, path::Path};
 
 
 
@@ -25,6 +25,15 @@ impl BitwiseAdjacencyMatrix {
             powers_of_2 }
     }
 
+    pub fn reset(&mut self){
+        for i in 0..self.n {
+            self.in_degree[i] = 0;
+            self.un_degree[i] = self.n-1;
+            self.out_degree[i] = 0;
+            self.data[i] = 0;
+        }
+    }
+
     pub fn from_adj_matrix(adj: &Vec<Vec<bool>>) -> Self {
         let n = adj.len();
         let mut g = BitwiseAdjacencyMatrix::new(n);
@@ -42,20 +51,44 @@ impl BitwiseAdjacencyMatrix {
         self.n
     }
 
+    pub fn nb_arcs(&self) -> usize {
+        let mut c = 0;
+        for i in 0..self.n{
+            for j in 0..self.n{
+                if self.has_arc(i, j){
+                    c += 1;
+                }
+            }
+        }
+        c
+    }
+
     pub fn add_arc(&mut self, i: usize, j: usize) {
-        self.data[i] |= self.powers_of_2[j];
-        self.in_degree[j] += 1;
-        self.out_degree[i] += 1;
-        self.un_degree[j] -= 1;
-        self.un_degree[i] -= 1;
+        if self.has_arc(i, j) == false {
+            self.data[i] |= self.powers_of_2[j];
+            self.in_degree[j] += 1;
+            self.out_degree[i] += 1;
+            self.un_degree[j] -= 1;
+            self.un_degree[i] -= 1;
+        }
     }
 
     pub fn delete_arc(&mut self, i: usize, j: usize) {
-        self.data[i] &= !self.powers_of_2[j];
-        self.in_degree[j] -= 1;
-        self.out_degree[i] -= 1;
-        self.un_degree[j] += 1;
-        self.un_degree[i] += 1;
+        if self.has_arc(i, j) {
+            self.data[i] &= !self.powers_of_2[j];
+            self.in_degree[j] -= 1;
+            self.out_degree[i] -= 1;
+            self.un_degree[j] += 1;
+            self.un_degree[i] += 1;
+        }
+    }
+
+
+    pub fn add_cycle(&mut self, vertices: Vec<usize> ){
+        for i in 0..(vertices.len()-1) {
+            self.add_arc(vertices[i], vertices[i+1]);
+        }
+        self.add_arc(vertices[vertices.len()-1], vertices[0])
     }
 
     pub fn has_arc(&self, i: usize, j: usize) -> bool {
@@ -196,6 +229,7 @@ pub fn is_light(g: &BitwiseAdjacencyMatrix) -> bool {
                             if g.has_arc(b, u) &&  g.has_arc(v, b) && g.has_arc(a, b)  {
                                 for c in 0..n{
                                     if g.has_arc(c, u) && g.has_arc(v, c) && g.has_arc(b, c) && g.has_arc(c, a) {
+                                        // println!("light conflict: {u}-> {v}, ({a} -> {b} -> {c})");
                                         return false
                                     }
                                 }
@@ -572,3 +606,190 @@ pub fn compute_dichromatric_number(g: &BitwiseAdjacencyMatrix) -> usize {
     return g.n
 }
 
+fn check_insertion(g: &BitwiseAdjacencyMatrix, order: &Vec<usize>,  v: usize) -> Option<usize>{
+    if order.len() == 0{
+        return Some(0);
+    }
+    let mut k = 0;
+    while k < order.len(){
+        if g.has_arc(order[k], v){
+            break;
+        }
+        k +=1;
+    }
+    let mut k2 = order.len()-1;
+    loop {
+        if g.has_arc(v, order[k2]){
+            break;
+        }
+        if k2 == 0 {
+            return Some(0)
+        }
+        k2 -=1;
+    }
+    if k == k2+1 {
+        Some(k)
+    } else {
+        None
+    }
+}
+
+
+pub fn check_3_rainbow_colorability(g: &BitwiseAdjacencyMatrix) -> bool {
+    
+    let n = g.n;
+
+    let permutations = vec![ 
+        vec![0,1,2], 
+        vec![0,2,1],
+        vec![1,0,2],
+        vec![1,2,0],
+        vec![2,0,1],
+        vec![2,1,0]];
+
+    let mut orders = vec![
+        vec![],
+        vec![],
+        vec![]
+    ];
+    
+    let mut coloring = vec![4;n];
+    let mut indices = vec![n+1;n];
+
+    let mut todo = vec![];
+    for i in 0..(n/3) {
+        todo.push((i,0));
+    }
+
+    let mut done = vec![];
+
+    loop {
+
+        if let Some((i,j)) = todo.pop(){
+
+            // check if we insert the 3 vertices
+            let mut ok = false;
+            if let Some(k0) = check_insertion(g, &orders[permutations[j][0]], i*3) {
+                if let Some(k1) = check_insertion(g, &orders[permutations[j][1]], i*3+1) {
+                    if let Some(k2) = check_insertion(g, &orders[permutations[j][2]], i*3+2) {
+                        ok = true;
+                        coloring[i*3] = permutations[j][0];
+                        coloring[i*3+1] = permutations[j][1];
+                        coloring[i*3+2] = permutations[j][2];
+                        orders[permutations[j][0]].insert(k0, i*3);
+                        orders[permutations[j][1]].insert(k1, i*3+1);
+                        orders[permutations[j][2]].insert(k2, i*3+2);
+                        indices[i*3] = k0;
+                        indices[i*3+1] = k1;
+                        indices[i*3+2] = k2;
+                        done.push((i,j));
+                    }
+                }
+            }
+
+            if ok == false {
+                if j+1 < permutations.len() {
+                    todo.push((i,j+1));
+                } 
+                else {
+                    todo.push((i,0));
+                    // Backtrack
+                    let mut finito = true;
+                    while let Some((s,t)) = done.pop(){
+                        orders[permutations[t][0]].remove(indices[s*3]);
+                        orders[permutations[t][1]].remove(indices[s*3+1]);
+                        orders[permutations[t][2]].remove(indices[s*3+2]);
+                        indices[s*3] = n+1;
+                        indices[s*3+1] = n+1;
+                        indices[s*3+2] = n+1;
+                        coloring[s*3] = 4;
+                        coloring[s*3+1] = 4;
+                        coloring[s*3+2] = 4;
+
+                        if t+1 < permutations.len() {
+                            finito = false;
+                            todo.push((s,t+1));
+                            break;
+                        } else {
+                            todo.push((s,0));
+                        }
+                    }
+                    if finito {
+                        return false;
+                    }
+                }
+
+                
+
+            }
+        } 
+        else {
+            return true;
+        }
+        
+       
+
+    }
+
+
+}
+
+
+
+
+
+
+
+// Light extension
+
+pub fn list_all_light_extension(g: &mut BitwiseAdjacencyMatrix) {
+
+
+    
+    
+    let n = g.n;
+    let mut todo = vec![];
+    for i in 0..n {
+        for j in i+1..n {
+            if g.has_arc(i, j) == false && g.has_arc(j,i) == false {
+                todo.push((i,j));
+            }
+        }
+    }
+    println!("{todo:?}");
+
+    let mut done = vec![];
+
+    loop {
+
+        if let Some((i,j)) = todo.pop(){
+            g.add_arc(i, j);
+            done.push((i,j));
+        } 
+        else {
+            if is_light(g) {
+                println!("light {done:?}");
+            }
+            let mut finito = true;
+            while let Some((i,j)) = done.pop(){
+                g.delete_arc(i, j);
+                if i < j {
+                    finito = false;
+                    todo.push((j,i));
+                    break;
+                } else {
+                    todo.push((j,i));
+                }
+            }
+            if finito {
+                return;
+            }
+        }
+        
+       
+
+    }
+
+
+
+}

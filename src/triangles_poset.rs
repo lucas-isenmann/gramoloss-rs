@@ -26,10 +26,10 @@ pub fn compute_triangles_poset(g: &BitwiseAdjacencyMatrix){
                         for x in 0..t {
                             let (a,b,c) = triangles[x];
                             if is_dominating(g, &vec![a,b,c], &vec![i,j,k]){
-                                dominate[x].push(t+1);
+                                dominate[x].push(t);
                             }
                             else if is_dominating(g, &vec![i,j,k] , &vec![a,b,c] ) {
-                                dominate[t+1].push(x);
+                                dominate[t].push(x);
                             }
                         }
                         triangles.push((i,j,k));
@@ -50,10 +50,10 @@ pub fn compute_triangles_poset(g: &BitwiseAdjacencyMatrix){
                         for x in 0..t {
                             let (a,b,c) = triangles[x];
                             if is_dominating(g, &vec![a,b,c], &vec![i,j,k]){
-                                dominate[x].push(t+1);
+                                dominate[x].push(t);
                             }
                             else if is_dominating(g, &vec![i,j,k] , &vec![a,b,c] ) {
-                                dominate[t+1].push(x);
+                                dominate[t].push(x);
                             }
                         }
                         triangles.push((i,j,k));
@@ -66,5 +66,8 @@ pub fn compute_triangles_poset(g: &BitwiseAdjacencyMatrix){
 
     println!("{triangles:?}");
     println!("{dominate:?}");
+    for i in 0..t {
+        println!("{i}: {:?}: {:?} ", triangles[i], dominate[i] );
+    }
 
 }
