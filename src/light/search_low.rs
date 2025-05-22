@@ -1,4 +1,4 @@
-use crate::BitwiseAdjacencyMatrix;
+use crate::{compute_dichromatric_number, is_light, is_local_light, BitwiseAdjacencyMatrix};
 
 
 
@@ -17,8 +17,8 @@ use crate::BitwiseAdjacencyMatrix;
 /// Try to extend the graph with all possible arcs to make it light and have chromatic number 4
 /// 
 /// 
-pub fn search5(n: usize){
-    println!("search 5");
+pub fn search6(n: usize){
+    println!("search 6");
     let mut g = BitwiseAdjacencyMatrix::new(5*n+3);
 
     g.add_cycle(vec![0,1,2]);
@@ -35,6 +35,8 @@ pub fn search5(n: usize){
     g.make_transitive(&t12);
     g.make_transitive(&t20);
 
+    g.add_arcs(&left, &vec![0,1,2]);
+    g.add_arcs(&vec![0,1,2], &right);
     g.add_arcs(&left, &right);
 
     g.add_arcs( &t01, &vec![0]);
@@ -50,7 +52,71 @@ pub fn search5(n: usize){
     g.print_in_degrees();
 
 
+    println!("m={}", g.nb_arcs());
 
+    let n = 3+5*n;
+
+    let mut todo = vec![];
+    for i in 0..n {
+        for j in i+1..n {
+            if g.has_arc(i, j) == false && g.has_arc(j,i) == false {
+                todo.push((i,j));
+            }
+        }
+    }
+    println!("nb arcs to choose: {}", todo.len());
+
+    let mut done = vec![];
+
+    loop {
+
+        if let Some((i,j)) = todo.pop(){
+            g.add_arc(i, j);
+            if is_local_light(&g, i, j) {
+                done.push((i,j));
+            } else {
+                done.push((i,j));
+                let mut finito = true;
+                while let Some((i,j)) = done.pop(){
+                    g.delete_arc(i, j);
+                    if i < j {
+                        finito = false;
+                        todo.push((j,i));
+                        break;
+                    } else {
+                        todo.push((j,i));
+                    }
+                }
+                if finito {
+                    return;
+                }
+            }
+        } 
+        else {
+            // if true || is_light(&g)  {
+                let chi =  compute_dichromatric_number(&g) ;
+                if chi >= 3 {
+                    println!("chi= {chi}");
+                    println!("done: {done:?}");
+
+                }
+            // }
+            let mut finito = true;
+            while let Some((i,j)) = done.pop(){
+                g.delete_arc(i, j);
+                if i < j {
+                    finito = false;
+                    todo.push((j,i));
+                    break;
+                } else {
+                    todo.push((j,i));
+                }
+            }
+            if finito {
+                return;
+            }
+        }
+    }
     
 
 }

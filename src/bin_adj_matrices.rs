@@ -187,6 +187,46 @@ impl BitwiseAdjacencyMatrix {
     
     }
 
+
+
+    pub fn is_strongly_connected(&self) -> bool {
+        // For each vertex, check if we can reach all other vertices
+        for start in 0..self.n {
+            let reachable = self.reachable_vertices(start);
+            
+            // Check if we can reach every vertex except ourselves
+            for end in 0..self.n {
+                if start != end && !reachable[end] {
+                    return false;
+                }
+            }
+        }
+        
+        true
+    }
+
+    /// Helper function to compute vertices reachable from a given vertex
+    fn reachable_vertices(&self, start: usize) -> Vec<bool> {
+        let mut visited = vec![false; self.n];
+        let mut stack = vec![start];
+        visited[start] = true;
+
+        // Perform DFS traversal
+        while let Some(vertex) = stack.pop() {
+            // Check all potential neighbors
+            for neighbor in 0..self.n {
+                if vertex != neighbor && 
+                !visited[neighbor] && 
+                self.has_arc(vertex, neighbor) {
+                    visited[neighbor] = true;
+                    stack.push(neighbor);
+                }
+            }
+        }
+
+        visited
+    }
+
     pub fn from_dot_file<P: AsRef<Path>>(path: P) -> Result<Self, std::io::Error> {
         let contents = fs::read_to_string(path)?;
 

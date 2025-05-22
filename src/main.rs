@@ -1,6 +1,7 @@
 use std::{collections::HashSet, fs::File, io::{BufRead, BufReader}};
 
 use ds::{greedy_ds, greedy_dual_ds_v2, is_2_independent_set, min_dominating_set, semi_exact_dual_ds};
+use light_rs::search6;
 use matrix_graph::{print_adj, MatrixGraph};
 use bin_adj_matrices::{ check_3_rainbow_colorability, list_all_light_extension, search3, BitwiseAdjacencyMatrix};
 use degrees::{in_degree, in_degrees_sequence};
@@ -566,6 +567,10 @@ fn check_rainbow_random_grid_poset(n: usize, m :usize){
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
+
+
+    search6(2);
+    return;
 
     // DS
 
