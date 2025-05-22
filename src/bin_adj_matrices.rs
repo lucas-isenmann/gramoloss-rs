@@ -91,6 +91,41 @@ impl BitwiseAdjacencyMatrix {
         self.add_arc(vertices[vertices.len()-1], vertices[0])
     }
 
+    /// Makes a directed graph transitive over the specified vertices.
+    /// 
+    /// For every pair of vertices (v₁, v₂) where v₁ appears before v₂ in the input vector,
+    /// adds a directed arc from v₁ to v₂.
+    /// 
+    /// ## Arguments
+    /// 
+    /// * `vertices`: A vector of vertex indices that defines the ordering for transitivity
+    /// 
+    /// ## Examples
+    /// 
+    /// ```rust
+    /// // Given vertices [a, b, c]:
+    /// // Creates arcs: a->b, a->c, b->c
+    /// ```
+    pub fn make_transitive(&mut self, vertices: &Vec<usize>){
+        let k = vertices.len();
+        for i in 0..k {
+            for j in 0..i {
+                self.add_arc(vertices[j], vertices[i]);
+            }
+        }
+    }
+
+    pub fn add_arcs(&mut self, sources: &Vec<usize>, targets: &Vec<usize>){
+        for &s in sources {
+            for &t in targets {
+                self.add_arc(s, t);
+            }
+        }
+    }
+
+
+
+
     pub fn has_arc(&self, i: usize, j: usize) -> bool {
         (self.data[i] & self.powers_of_2[j]) != 0
     }

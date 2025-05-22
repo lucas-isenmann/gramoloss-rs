@@ -1,6 +1,7 @@
 use std::{collections::HashSet, fs::File, io::{BufRead, BufReader}};
 
-use adj_matrices::print_adj;
+use ds::{greedy_ds, greedy_dual_ds_v2, is_2_independent_set, min_dominating_set, semi_exact_dual_ds};
+use matrix_graph::{print_adj, MatrixGraph};
 use bin_adj_matrices::{ check_3_rainbow_colorability, list_all_light_extension, search3, BitwiseAdjacencyMatrix};
 use degrees::{in_degree, in_degrees_sequence};
 use dichromatic_number::{compute_dichromatric_number, to_dot};
@@ -12,13 +13,14 @@ use triangles_poset::compute_triangles_poset;
 
 mod triangles_poset;
 mod dichromatic_number;
-mod adj_matrices;
+mod matrix_graph;
 mod lightness;
 mod tournaments_generators;
 mod search;
 mod degrees;
 mod bin_adj_matrices;
 mod light_gen;
+mod ds;
 
 use std::env;
 
@@ -80,6 +82,7 @@ fn search_grid_poset(n: usize, m :usize){
  using the precomputed list of possible light connexions between 2 incomparable triangles
  */
 fn search_light_antichain(n: usize){
+    println!("search light antichain");
 
     let file = File::open("2T3_light_extensions.csv").unwrap();
     let reader = BufReader::new(file);
@@ -94,6 +97,38 @@ fn search_light_antichain(n: usize){
             matrix.push(row);
         }
     }
+
+    let limit = 10000;
+    let mut sieve_array = vec![true; limit + 1];
+    let mut primes = vec![];
+    
+    // 0 and 1 are not prime numbers
+    sieve_array[0] = false;
+    sieve_array[1] = false;
+    
+    // Mark all even numbers as composite (except 2)
+    for i in (4..limit + 1).step_by(2) {
+        sieve_array[i] = false;
+    }
+    
+    // Only need to check up to square root of limit
+    let mut i = 3;
+    while i * i <= limit {
+        if sieve_array[i] {
+            
+            // Mark multiples as composite, starting from i*i
+            for j in ((i * i)..limit + 1).step_by(i * 2) {
+                sieve_array[j] = false;
+            }
+        }
+        i += 2; // Skip even numbers
+    }
+    for i in 60..limit {
+        if sieve_array[i] {
+            primes.push(i);
+        }
+    }
+
 
 
     let s = 3*n;
@@ -121,6 +156,7 @@ fn search_light_antichain(n: usize){
         }
     }
     println!("{todo:?}");
+    println!("nb of connections: {}", todo.len());
 
 
     let mut done = vec![];
@@ -129,9 +165,9 @@ fn search_light_antichain(n: usize){
     loop {
         if let Some((i,j,r)) = todo.pop(){
             let vtriangles = vec![v[i][0], v[i][1], v[i][2], v[j][0], v[j][1], v[j][2]];
-
+            let rp = (r*primes[i*n+j])% matrix.len();
             for k in 0..9 {
-                g.add_arc(vtriangles[matrix[r][2*k]], vtriangles[matrix[r][2*k+1]]);
+                g.add_arc(vtriangles[matrix[rp][2*k]], vtriangles[matrix[rp][2*k+1]]);
             }
 
             done.push((i,j,r));
@@ -140,7 +176,6 @@ fn search_light_antichain(n: usize){
             // End of branch
             if bin_adj_matrices::is_light(&g) {
                 c += 1;
-                // println!("{c}");
                 if check_3_rainbow_colorability(&g) == false {
                     println!("bug")
                 }
@@ -154,8 +189,9 @@ fn search_light_antichain(n: usize){
             let mut finito = true;
             while let Some((i,j,r)) = done.pop(){
                 let vtriangles = vec![v[i][0], v[i][1], v[i][2], v[j][0], v[j][1], v[j][2]];
+                let rp = (r*primes[i*n+j])% matrix.len();
                 for k in 0..9 {
-                    g.delete_arc(vtriangles[matrix[r][2*k]], vtriangles[matrix[r][2*k+1]]);
+                    g.delete_arc(vtriangles[matrix[rp][2*k]], vtriangles[matrix[rp][2*k+1]]);
                 }
                 
 
@@ -529,8 +565,33 @@ fn check_rainbow_random_grid_poset(n: usize, m :usize){
 
 
 fn main() {
+    let args: Vec<String> = std::env::args().collect();
 
-    let args: Vec<String> = env::args().collect();
+    // DS
+
+    let g = MatrixGraph::load_from_edge_list_file(args.get(1).unwrap()).unwrap();
+    let verbose: usize = args.get(2).unwrap().parse().unwrap();
+    g.print_adj();
+    g.print_degree_sequence();
+    // g.print_degrees();
+
+
+
+    
+    for k in 0..6 {
+        let subset = semi_exact_dual_ds(&g, k);
+        println!("{k}: {} {}", subset.len(), is_2_independent_set(&g, &subset));
+    }
+
+
+    println!("lower bound: {:?}", greedy_dual_ds_v2(&g));
+    println!("greedy ds: {:?}", greedy_ds(&g));
+    println!("upper bound: {:?}", greedy_ds(&g).len());
+    let ds = min_dominating_set(&g, verbose);
+    println!("dn: {:?}", ds.len());
+    println!("mds: {:?}", ds);
+    return ;
+
     
     
     
@@ -551,7 +612,7 @@ fn main() {
         }
     };
 
-    check_rainbow_random_grid_poset(n, m);
+    // check_rainbow_random_grid_poset(n, m);
     // check_hereditary_subtournament();
     // search_light_antichain(n);
     // light_extension();
@@ -563,7 +624,7 @@ fn main() {
     //     search_ug_tournament(1+2*n);
     // }
     
-    // search3(13);
+    search3(17);
 
     // search2(9);
 

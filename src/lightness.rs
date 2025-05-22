@@ -1,4 +1,4 @@
-use crate::adj_matrices::print_adj;
+use crate::matrix_graph::print_adj;
 
 
 pub fn is_light(adj: &Vec<Vec<bool>>) -> bool {
