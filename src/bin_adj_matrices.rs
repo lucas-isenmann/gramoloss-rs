@@ -51,6 +51,10 @@ impl BitwiseAdjacencyMatrix {
         self.n
     }
 
+    pub fn nb_vertices(&self) -> usize {
+        self.n
+    }
+
     pub fn nb_arcs(&self) -> usize {
         let mut c = 0;
         for i in 0..self.n{

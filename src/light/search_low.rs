@@ -2,6 +2,62 @@ use crate::{compute_dichromatric_number, is_light, is_local_light, BitwiseAdjace
 
 
 
+pub fn light_extend(g: &mut BitwiseAdjacencyMatrix){
+
+    let n = g.nb_vertices();
+
+    let mut t = vec![vec![vec![];n];n];
+    for i in 0..n{
+        for j in 0..n {
+            if g.has_arc(i, j) {
+                // i -> j -> u -> i
+                for u in 0..n {
+                    if g.has_arc(j,u) && g.has_arc(u, i){
+
+                        let mut insertion_index = None;
+                        let mut is_ok = true;
+                        for (index, &x) in t[i][j].iter().enumerate() {
+                            if insertion_index == None {
+                                if g.has_arc(u, x) {
+                                    insertion_index = Some(index);
+                                }
+                            } else if g.has_arc(x, u) {
+                                println!("not light {i} {j} with {u}");
+                                is_ok = false;
+                                break;
+                            }
+                        }
+                        if is_ok {
+                            if let Some(index) = insertion_index {
+                                t[i][j].insert(index, u);
+                            } else {
+                                t[i][j].push(u);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+
+    for i in 0..n {
+        // Compute N+(i) and N-(i) in [0,i[
+
+
+        // Iterate over all possibilities for R
+    }
+
+
+
+
+
+
+}
+
+
+
 
 /// ##########################""
 /// Strategy: 
