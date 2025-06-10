@@ -113,7 +113,7 @@ fn backtrack(g: &mut BitwiseAdjacencyMatrix,
             while let Some((x,y,a,i,b,c)) = added.pop(){
                 if x == u && y == v {
                     // println!("undo added({x} {y} {a} {i} {b} {c})");
-                    let w= t[b][c].remove(i);
+                    t[b][c].remove(i);
                 } else {
                     added.push((x,y,a,i,b,c));
                     break;
@@ -130,7 +130,7 @@ fn backtrack(g: &mut BitwiseAdjacencyMatrix,
             while let Some((x,y,a,i,b,c)) = added.pop(){
                 if x == u && y == v {
                     // println!("undo added({x} {y} {a} {i} {b} {c})");
-                    let w= t[b][c].remove(i);
+                    t[b][c].remove(i);
                     
                 } else {
                     added.push((x,y,a,i,b,c));
