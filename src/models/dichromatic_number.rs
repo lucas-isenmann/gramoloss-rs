@@ -95,7 +95,7 @@ fn search_proper_coloring(
 
 
 
-pub fn acyclic_coloring(
+pub fn acyclic_coloring_matrix(
     adj: &Vec<Vec<bool>>,
     color_max: usize,
 ) -> Vec<usize> {
@@ -122,10 +122,10 @@ pub fn acyclic_coloring(
 
 
 
-pub fn compute_dichromatric_number(adj: &Vec<Vec<bool>>) -> usize {
+pub fn compute_dichromatric_number_matrix(adj: &Vec<Vec<bool>>) -> usize {
     let n = adj.len();
     for i in 0..n {
-        if acyclic_coloring(&adj, i).len() > 0{
+        if acyclic_coloring_matrix(&adj, i).len() > 0{
             return i
         }
     }

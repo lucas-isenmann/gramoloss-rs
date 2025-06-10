@@ -1,5 +1,6 @@
-use crate::bin_adj_matrices::{is_light, BitwiseAdjacencyMatrix};
 use rand::{random_bool, random_range};
+
+use crate::BitwiseAdjacencyMatrix;
 
 fn lol(g: &mut BitwiseAdjacencyMatrix, v: &mut Vec<Vec<Vec<usize>>>, i: usize, j: usize, i2: usize, j2: usize){
     for k in 0..3{

@@ -47,6 +47,20 @@ impl BitwiseAdjacencyMatrix {
         g
     }
 
+    pub fn has_digon(&self) -> bool {
+        for x in 0..self.n {
+            for y in 0..self.n {
+                if self.has_arc(x, y) && self.has_arc(y, x) {
+                    println!("digon: {x} {y}");
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    
+
     pub fn size(&self) -> usize {
         self.n
     }
@@ -65,6 +79,10 @@ impl BitwiseAdjacencyMatrix {
             }
         }
         c
+    }
+
+    pub fn get_un_degree(&self, i: usize) -> usize {
+        self.un_degree[i]
     }
 
     pub fn add_arc(&mut self, i: usize, j: usize) {
@@ -136,6 +154,10 @@ impl BitwiseAdjacencyMatrix {
 
     pub fn in_degree(&self, i: usize) -> usize {
         self.in_degree[i]
+    }
+
+    pub fn out_degree(&self, i: usize) -> usize {
+        self.out_degree[i]
     }
 
     pub fn print_in_degrees(&self) {
@@ -308,7 +330,7 @@ pub fn is_light(g: &BitwiseAdjacencyMatrix) -> bool {
                             if g.has_arc(b, u) &&  g.has_arc(v, b) && g.has_arc(a, b)  {
                                 for c in 0..n{
                                     if g.has_arc(c, u) && g.has_arc(v, c) && g.has_arc(b, c) && g.has_arc(c, a) {
-                                        // println!("light conflict: {u}-> {v}, ({a} -> {b} -> {c})");
+                                        println!("light conflict: {u}-> {v}, ({a} -> {b} -> {c})");
                                         return false
                                     }
                                 }

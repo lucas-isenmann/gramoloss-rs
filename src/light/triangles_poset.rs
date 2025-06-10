@@ -1,4 +1,5 @@
-use crate::bin_adj_matrices::BitwiseAdjacencyMatrix;
+use crate::BitwiseAdjacencyMatrix;
+
 
 pub fn is_dominating(g: &BitwiseAdjacencyMatrix, aset: &Vec<usize>, bset: &Vec<usize>) -> bool {
     for &a in aset {

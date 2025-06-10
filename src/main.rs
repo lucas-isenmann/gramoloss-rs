@@ -1,29 +1,15 @@
 use std::{collections::HashSet, fs::File, io::{BufRead, BufReader}};
 
-use ds::{greedy_ds, greedy_dual_ds_v2, is_2_independent_set, min_dominating_set, semi_exact_dual_ds};
-use light_rs::search6;
-use matrix_graph::{print_adj, MatrixGraph};
-use bin_adj_matrices::{ check_3_rainbow_colorability, list_all_light_extension, search3, BitwiseAdjacencyMatrix};
-use degrees::{in_degree, in_degrees_sequence};
-use dichromatic_number::{compute_dichromatric_number, to_dot};
-use light_gen::gen_grid_poset;
-use lightness::{is_light, is_light_critic};
-use search::search2;
-use tournaments_generators::{circulant_tournament, group_tournament, ug_tournament};
-use triangles_poset::compute_triangles_poset;
 
-mod triangles_poset;
-mod dichromatic_number;
-mod matrix_graph;
-mod lightness;
-mod tournaments_generators;
-mod search;
-mod degrees;
-mod bin_adj_matrices;
-mod light_gen;
-mod ds;
+
+
+
 
 use std::env;
+
+// use light_rs::{ check_3_rainbow_colorability, circulant_tournament, compute_dichromatric_number, compute_dichromatric_number_matrix, compute_triangles_poset, gen_grid_poset, greedy_dual_ds_v2, group_tournament, in_degree, in_degrees_sequence, is_2_independent_set, is_light, is_light_matrix, light_extend_v2, list_all_light_extension, print_adj, search6, semi_exact_dual_ds, to_dot, ug_tournament, BitwiseAdjacencyMatrix, MatrixGraph};
+
+use light_rs::*;
 
 
 
@@ -64,14 +50,14 @@ fn search_grid_poset(n: usize, m :usize){
 
     let mut g = BitwiseAdjacencyMatrix::new(3*n*m);
     gen_grid_poset(&mut g, n, m, &matrix);
-    while bin_adj_matrices::is_light(&g) == false {
+    while is_light(&g) == false {
         gen_grid_poset(&mut g, n, m, &matrix);
     }
     
     g.to_dot();
     println!("nb arcs: {}", g.nb_arcs());
-    println!("light: {}", bin_adj_matrices::is_light(&g));
-    println!("chi: {}", bin_adj_matrices::compute_dichromatric_number(&g));
+    println!("light: {}", is_light(&g));
+    println!("chi: {}", compute_dichromatric_number(&g));
 }
 
 
@@ -175,7 +161,7 @@ fn search_light_antichain(n: usize){
         } 
         else {
             // End of branch
-            if bin_adj_matrices::is_light(&g) {
+            if is_light(&g) {
                 c += 1;
                 if check_3_rainbow_colorability(&g) == false {
                     println!("bug")
@@ -242,7 +228,7 @@ fn search(n: usize){
             adj[i][j] = true;
             
 
-            if is_light(&adj){
+            if is_light_matrix(&adj){
                 done.push((i,j));
                 continue;
             } else {
@@ -267,7 +253,7 @@ fn search(n: usize){
         }
 
         // Light tournament found
-        if is_light(&adj){
+        if is_light_matrix(&adj){
             let mut is_twin = false;
             for u in 0..n {
                 for v in 0..u{
@@ -287,7 +273,7 @@ fn search(n: usize){
 
 
             if is_twin == false {
-                let dn = compute_dichromatric_number(&adj);
+                let dn = compute_dichromatric_number_matrix(&adj);
                 if dn >= 2 {
                     let mut is_increasing = true;
                     for k in 1..n{
@@ -367,9 +353,9 @@ fn group_tournament_test() {
             }
         }
         let g = group_tournament(n, m, positives.clone());
-        if is_light(&g){
+        if is_light_matrix(&g){
             
-            let chi = dichromatic_number::compute_dichromatric_number(&g);
+            let chi = compute_dichromatric_number_matrix(&g);
             
             if chi >= 3{
                 println!("{positives:?}");
@@ -392,8 +378,8 @@ fn group_tournament_test() {
         let g = group_tournament(3, 3, vec![(0,2), (2,0), (1,1), (1,2)]);
         print_adj(&g);
         println!("---");
-        println!("{}", is_light(&g));
-        let chi = dichromatic_number::compute_dichromatric_number(&g);
+        println!("{}", is_light_matrix(&g));
+        let chi = compute_dichromatric_number_matrix(&g);
         println!("chi: {chi}");
     }
     
@@ -422,8 +408,8 @@ fn search_ug_tournament(n: usize){
                 }
             }
         }
-        if bin_adj_matrices::is_light(&g2) {
-            let chi = bin_adj_matrices::compute_dichromatric_number(&g2);
+        if is_light(&g2) {
+            let chi = compute_dichromatric_number(&g2);
             if chi >= 4 {
                 println!("\t{gaps:?}");
                 g2.to_dot();
@@ -450,8 +436,8 @@ fn search_ug_tournament(n: usize){
 fn print_triangles_poset(){
     let g = BitwiseAdjacencyMatrix::from_adj_matrix(&circulant_tournament(vec![true, true, true, true]));
     let g = BitwiseAdjacencyMatrix::from_dot_file("t13.dot").unwrap();
-    println!("is_light={}", bin_adj_matrices::is_light(&g));
-    let chi = bin_adj_matrices::compute_dichromatric_number(&g);
+    println!("is_light={}", is_light(&g));
+    let chi = compute_dichromatric_number(&g);
     println!("chi={chi}");
 
     g.to_dot();
@@ -545,7 +531,7 @@ fn check_rainbow_random_grid_poset(n: usize, m :usize){
 
     loop {
         gen_grid_poset(&mut g, n, m, &matrix);
-        while bin_adj_matrices::is_light(&g) == false {
+        while is_light(&g) == false {
             gen_grid_poset(&mut g, n, m, &matrix);
         }
         let is_3rainbow = check_3_rainbow_colorability(&g);
@@ -553,8 +539,8 @@ fn check_rainbow_random_grid_poset(n: usize, m :usize){
             g.to_dot();
             println!("3-rainbow: {}", is_3rainbow);
             println!("nb arcs: {}", g.nb_arcs());
-            println!("light: {}", bin_adj_matrices::is_light(&g));
-            println!("chi: {}", bin_adj_matrices::compute_dichromatric_number(&g));
+            println!("light: {}", is_light(&g));
+            println!("chi: {}", compute_dichromatric_number(&g));
             break;
         }
         println!("3-rainbow: {}", is_3rainbow);
@@ -569,7 +555,18 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
 
 
-    search6(2);
+    // let file_path = args.get(1).unwrap();
+    // let g = BitwiseAdjacencyMatrix::from_dot_file(file_path).unwrap();
+
+    // println!("n: {}", g.nb_vertices());
+    // println!("m: {}", g.nb_arcs());
+    // println!("connected: {}", g.is_strongly_connected());
+    // println!("light: {}", is_light(&g));
+    // println!("chi: {}", compute_dichromatric_number(&g));
+    // return;
+
+    let k: usize = args.get(1).unwrap().parse().unwrap();
+    search6(k);
     return;
 
     // DS
@@ -637,7 +634,7 @@ fn main() {
 
     // search(11);
 
-    search2(11);
+    // search2(11);
 
     
 
@@ -650,9 +647,9 @@ fn main() {
                 g[i][j] = p7[i][j];
             }
         }
-        println!("{}", is_light(&g));
+        println!("{}", is_light_matrix(&g));
         print_adj(&g);
-        let chi = dichromatic_number::compute_dichromatric_number(&g);
+        let chi = compute_dichromatric_number_matrix(&g);
         println!("chi: {chi}");
         println!("light critic: {}", is_light_critic(&g));
     }
@@ -660,18 +657,18 @@ fn main() {
     if false 
     {
         let g = circulant_tournament(vec![true, true, false]);
-        println!("{}", is_light(&g));
+        println!("{}", is_light_matrix(&g));
         print_adj(&g);
-        let chi = dichromatic_number::compute_dichromatric_number(&g);
+        let chi = compute_dichromatric_number_matrix(&g);
         println!("chi: {chi}");
         println!("light critic: {}", is_light_critic(&g));
     }
 
     if false {
         let g = ug_tournament(11, &HashSet::from([3,6]));
-        println!("{}", is_light(&g));
+        println!("{}", is_light_matrix(&g));
         print_adj(&g);
-        let chi = dichromatic_number::compute_dichromatric_number(&g);
+        let chi = compute_dichromatric_number_matrix(&g);
         println!("{chi}");
     }
     

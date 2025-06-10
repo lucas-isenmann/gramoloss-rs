@@ -1,7 +1,7 @@
 use crate::matrix_graph::print_adj;
 
 
-pub fn is_light(adj: &Vec<Vec<bool>>) -> bool {
+pub fn is_light_matrix(adj: &Vec<Vec<bool>>) -> bool {
     let n = adj.len();
     for u in 0..n {
         for v in 0..n {
@@ -28,7 +28,7 @@ pub fn is_light(adj: &Vec<Vec<bool>>) -> bool {
 
 
 
-pub fn is_local_light(matrix: &Vec<Vec<bool>>, u: usize, v: usize) -> bool {
+pub fn is_local_light_matrix(matrix: &Vec<Vec<bool>>, u: usize, v: usize) -> bool {
     let n = matrix.len();
 
     // Type 1 conflict with uv (u->v is an heavy arc)
@@ -139,7 +139,7 @@ pub fn is_light_critic(m: &Vec<Vec<bool>>) -> bool {
             println!("impl {i} {j}");
             adj[i][j] = true; // Add arc ij
 
-            if is_light(&adj){
+            if is_light_matrix(&adj){
                 done.push((i,j));
                 continue;
             } else {
@@ -149,7 +149,7 @@ pub fn is_light_critic(m: &Vec<Vec<bool>>) -> bool {
                     println!("impl {j} {i}");
                     adj[j][i] = true; // Add arc ji if i < j
 
-                    if is_light(&adj) {
+                    if is_light_matrix(&adj) {
                         done.push((j,i));
                     } else {
                         adj[j][i] = false;

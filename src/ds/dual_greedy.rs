@@ -1,5 +1,4 @@
 use std::{collections::HashSet, hash::Hash};
-use crate::MatrixGraph;
 
 
 
@@ -139,6 +138,8 @@ pub fn greedy_dual_ds_v2(g: &MatrixGraph) -> HashSet<usize>{
 
 
 use itertools::Itertools;
+
+use crate::MatrixGraph;
 
 
 
