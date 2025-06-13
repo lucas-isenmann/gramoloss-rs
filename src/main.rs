@@ -580,15 +580,18 @@ fn main() {
 
 
     
-    for k in 0..6 {
+    for k in 0..3 {
         let subset = semi_exact_dual_ds(&g, k);
-        println!("{k}: {} {}", subset.len(), is_2_independent_set(&g, &subset));
+        println!("semi greedy kernel {k}: {} {}", subset.len(), is_2_independent_set(&g, &subset));
     }
 
+    for k in 0..3 {
+        let subset = semi_greedy_ds(&g, k);
+        println!("semi greedy ds {k}: {}", subset.len());
+    }
 
-    println!("lower bound: {:?}", greedy_dual_ds_v2(&g));
-    println!("greedy ds: {:?}", greedy_ds(&g));
-    println!("upper bound: {:?}", greedy_ds(&g).len());
+    
+
     let ds = min_dominating_set(&g, verbose);
     println!("dn: {:?}", ds.len());
     println!("mds: {:?}", ds);

@@ -1,4 +1,4 @@
-use crate::{compute_dichromatric_number, is_light, is_local_light, BitwiseAdjacencyMatrix};
+use crate::{acyclic_coloring, compute_dichromatric_number, is_light, is_local_light, BitwiseAdjacencyMatrix};
 
 
 
@@ -59,7 +59,7 @@ fn compute_partial_orders(g: &mut BitwiseAdjacencyMatrix, t: &mut Vec<Vec<Vec<us
         // compute t[k][v]
         t[k][v].clear();
 
-        for &u in in_neighbors .iter() {
+        for &u in in_neighbors.iter() {
             if g.has_arc(v, u) {
                 // add v in t[k][v]
                 if insert_in_partial_order(g, t, u, k, v) == None {
@@ -229,8 +229,31 @@ pub fn light_extend_v2(g: &mut BitwiseAdjacencyMatrix){
             if k != v {
                 k = v;
 
-                let lightness = compute_partial_orders(g, &mut t, v);
+                let mut lightness = compute_partial_orders(g, &mut t, v);
                 // print_t(g, k+1, &t);
+
+                // for x in 0..v {
+                //     for y in 0..v {
+                //         if g.has_arc(x, y) {
+                //             let mut saturating = true;
+                //             for z in t[x][y].iter() {
+                //                 if g.has_arc(*z, v) == false && g.has_arc(v, *z) == false {
+                //                     saturating = false;
+                //                     break;
+                //                 }
+                //             }
+                //             if saturating {
+                //                 let b3 = insert_in_partial_order(g, &mut t, v, x, y);
+                //                 if let Some(i3) = b3 {
+                //                     added.push((u,v, v, i3, x, y)); 
+                //                 } else {
+                //                     lightness = false;
+                //                     break;
+                //                 }
+                //             }
+                //         }
+                //     }
+                // }
 
                 if !lightness {
                     done.push((u,v,dir));
@@ -267,7 +290,22 @@ pub fn light_extend_v2(g: &mut BitwiseAdjacencyMatrix){
                             break;
                         }
 
-                        // let b3 = insert_in_partial_order(g, &mut t, v, x, u);
+                        // let mut saturating = true;
+                        // for z in t[x][u].iter() {
+                        //     if g.has_arc(*z, v) == false && g.has_arc(v, *z) == false {
+                        //         saturating = false;
+                        //         break;
+                        //     }
+                        // }
+                        // if saturating {
+                        //     let b3 = insert_in_partial_order(g, &mut t, v, x, u);
+                        //     if let Some(i3) = b3 {
+                        //         added.push((u,v, v, i3, x, u)); 
+                        //     } else {
+                        //         is_ok = false;
+                        //         break;
+                        //     }
+                        // }
 
                     }
                 }
@@ -299,7 +337,22 @@ pub fn light_extend_v2(g: &mut BitwiseAdjacencyMatrix){
                             break;
                         }
 
-                        // let b2 = insert_in_partial_order(g, &mut t, v, u, x);
+                        // let mut saturating = true;
+                        // for z in t[u][x].iter() {
+                        //     if g.has_arc(*z, v) == false && g.has_arc(v, *z) == false {
+                        //         saturating = false;
+                        //         break;
+                        //     }
+                        // }
+                        // if saturating {
+                        //     let b3 = insert_in_partial_order(g, &mut t, v, u, x);
+                        //     if let Some(i3) = b3 {
+                        //         added.push((u,v, v, i3, u, x)); 
+                        //     } else {
+                        //         is_ok = false;
+                        //         break;
+                        //     }
+                        // }
 
                     }
                 }
@@ -320,8 +373,6 @@ pub fn light_extend_v2(g: &mut BitwiseAdjacencyMatrix){
                         }
                     }
                 }
-
-                
             }
 
             // print_t(g, v+1, &t);
@@ -344,13 +395,15 @@ pub fn light_extend_v2(g: &mut BitwiseAdjacencyMatrix){
 
         
 
-        if  compute_dichromatric_number(g) >= 3{
+        if true || compute_dichromatric_number(g) >= 3{
             println!("---LIGHT EXTENSION {nb_extensions}");
+            g.to_dot();
             println!("chi={}", compute_dichromatric_number(g));
+            println!("{:?}", acyclic_coloring(g, 3) );
             println!("m={}", g.nb_arcs());
             println!("islight: {}", is_light(g));
             println!("Added arcs: {done:?}");
-            g.to_dot();
+            // g.to_dot();
             for u in 0..n {
                 for v in 0..n {
                     if g.has_arc(u, v) {
@@ -390,15 +443,39 @@ pub fn light_extend_v2(g: &mut BitwiseAdjacencyMatrix){
 /// 
 pub fn search6(n: usize){
     println!("search 6");
-    let mut g = BitwiseAdjacencyMatrix::new(5*n+3);
+
+    let nleft = 0;
+    let nright = 1;
+    let n01 = 2;
+    let n12 = 2;
+    let n20 = 2;
+
+    let left: Vec<usize> = (3..3+nleft).collect();
+    let right: Vec<usize> = (3+nleft..3+nleft+nright).collect();
+    let t01: Vec<usize> = (3+nleft+nright..(3+nleft+nright+n01)).collect();
+    let t12: Vec<usize> = (3+nleft+nright+n01..(3+nleft+nright+n01+n12)).collect();
+    let t20: Vec<usize> = (3+nleft+nright+n01+n12..(3+nleft+nright+n01+n12+n20)).collect();
+
+    let mut g = BitwiseAdjacencyMatrix::new(left.len()+right.len()+t01.len()+t12.len()+t20.len()+3);
 
     g.add_cycle(vec![0,1,2]);
 
-    let left = (3..3+n).collect();
-    let right = (3+n..3+2*n).collect();
-    let t01 = (3+2*n..3+3*n).collect();
-    let t12 = (3+3*n..3+4*n).collect();
-    let t20 = (3+4*n..3+5*n).collect();
+    g.add_arc(6, 0);
+    g.add_arc(0, 7);
+    g.add_arc(8, 1);
+    g.add_arc(1, 9);
+    g.add_arc(4, 2);
+    g.add_arc(2, 5);
+
+    g.add_arc(3, 6);
+    g.add_arc(7, 3);
+
+    g.add_arc(3, 8);
+    g.add_arc(9, 3);    
+
+    g.add_arc(3, 4);
+    g.add_arc(5, 3);
+
 
     g.make_transitive(&left);
     g.make_transitive(&right);
@@ -491,7 +568,7 @@ pub fn search6(n: usize){
             // if true || is_light(&g)  {
             nb_extensions += 1;
                 let chi =  compute_dichromatric_number(&g) ;
-                if chi >= 3 {
+                if chi >= 1 {
                     println!("chi= {chi}");
                     println!("done: {done:?}");
 

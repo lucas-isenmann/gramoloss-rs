@@ -70,8 +70,9 @@ impl MatrixGraph {
 
     /// Prints the adjacency list representation of the graph
     pub fn print_adj(&self) {
+        println!("Neighbors: ");
         for v in 0..self.n {
-            print!("{} -> ", v);
+            print!("{} -- ", v);
             let neighbors: Vec<String> = self.get_neighbors(v)
                 .iter()
                 .map(|n| n.to_string())
@@ -135,7 +136,11 @@ impl MatrixGraph {
         
         // Read and add edges
         for (line_num, line) in lines.iter().skip(1).enumerate() {
-            
+
+            if line.starts_with("#") {
+                continue;
+            }
+
             let mut parts = line.trim().split_whitespace();
             let u = match parts.next() {
                 Some(s) => match s.parse::<usize>() {
